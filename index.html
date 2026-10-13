@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grand Aurora Theatre – Ticket Selection</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <h1>Grand Aurora Theatre</h1>
+      <p class="subtitle">Select your seats &middot; click a seat to inspect it, then press <strong>Add to Cart</strong></p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="map-panel" aria-label="Venue map">
+      <div class="toolbar" role="toolbar" aria-label="Map navigation controls">
+        <div class="btn-group" aria-label="Zoom">
+          <button type="button" id="zoom-in" title="Zoom In">+ Zoom In</button>
+          <button type="button" id="zoom-out" title="Zoom Out">&minus; Zoom Out</button>
+        </div>
+        <div class="btn-group" aria-label="Move">
+          <button type="button" id="move-up" title="Move Up">&uarr; Up</button>
+          <button type="button" id="move-down" title="Move Down">&darr; Down</button>
+          <button type="button" id="move-left" title="Move Left">&larr; Left</button>
+          <button type="button" id="move-right" title="Move Right">&rarr; Right</button>
+        </div>
+        <button type="button" id="reset-view" class="reset" title="Reset / Center View">&#8962; Reset / Center View</button>
+      </div>
+
+      <div id="viewport" class="viewport" aria-label="Seat map. Use the controls above to zoom and move.">
+        <div id="world" class="world"></div>
+      </div>
+
+      <ul class="legend" id="legend" aria-label="Legend"></ul>
+    </section>
+
+    <aside class="sidebar">
+      <section class="card" id="inspect-card" aria-labelledby="inspect-title" aria-live="polite">
+        <h2 id="inspect-title">Seat details</h2>
+        <div id="inspect-empty" class="muted">No seat selected. Click a seat on the map to inspect it.</div>
+        <dl id="inspect-details" class="details" hidden>
+          <dt>Seat</dt><dd id="d-seat"></dd>
+          <dt>Section</dt><dd id="d-section"></dd>
+          <dt>Row / Number</dt><dd id="d-rownum"></dd>
+          <dt>Category</dt><dd id="d-category"></dd>
+          <dt>Price</dt><dd id="d-price" class="price"></dd>
+          <dt>Status</dt><dd id="d-status"></dd>
+        </dl>
+        <button type="button" id="add-to-cart" class="primary" disabled>ADD TO CART</button>
+        <p id="message" class="message" role="status"></p>
+      </section>
+
+      <section class="card" aria-labelledby="cart-title">
+        <h2 id="cart-title">Your cart <span id="cart-count" class="badge">0</span></h2>
+        <ul id="cart-list" class="cart-list"></ul>
+        <p id="cart-empty" class="muted">Your cart is empty.</p>
+        <div class="total-row"><span>Total</span><strong id="cart-total">$0</strong></div>
+        <button type="button" id="clear-cart" class="secondary">Clear cart</button>
+      </section>
+    </aside>
+  </main>
+
+</body>
+</html>
