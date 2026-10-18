@@ -54,7 +54,8 @@
           const id = `${sec.id}-${rowLetter}${num}`;
           const norm = mid ? (c - mid) / mid : 0;
           const x = sec.x + c * PITCH;
-          const y = sec.y + r * PITCH + sec.curve * (norm * norm);
+          const y = sec.y + r * PITCH + sec.curve * (norm * norm); // edges curve toward the stage
+          // (center is lower, edges higher => wraps around stage)
           seats.set(id, {
             id,
             sectionId: sec.id,
@@ -71,6 +72,80 @@
     });
   }
 
+  /* =====================================================
+   * 3. DOM REFERENCES & STATE
+   * ===================================================== */
+  const $ = id => document.getElementById(id);
+  const viewport = $('viewport');
+  const world = $('world');
+  const addBtn = $('add-to-cart');
+  const message = $('message');
+
+  const cart = new Set();      // seat ids in cart
+  let inspectedId = null;
+  const seatEls = new Map();   // id -> button element
+
+  const fmt = n => '$' + n.toLocaleString('en-US');
+
+  /* =====================================================
+   * 4. RENDER VENUE
+   * ===================================================== */
+  function el(tag, cls, styles, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (styles) Object.assign(e.style, styles);
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  function renderVenue() {
+    world.style.width = WORLD.width + 'px';
+    world.style.height = WORLD.height + 'px';
+
+    const stage = el('div', 'stage', {
+      left: STAGE.x + 'px', top: STAGE.y + 'px', width: STAGE.w + 'px', height: STAGE.h + 'px'
+    }, 'STAGE');
+    world.appendChild(stage);
+
+    // section labels (generated from data)
+    SECTIONS.forEach(sec => {
+      const w = (sec.cols - 1) * PITCH + SEAT_SIZE;
+      const lab = el('div', 'section-label', {
+        left: sec.x + 'px', width: w + 'px', top: (sec.y - 36) + 'px'
+      });
+      lab.innerHTML = `<b>${sec.name}</b><br>${fmt(CATEGORIES[sec.category].price)}`;
+      world.appendChild(lab);
+    });
+
+    // markers
+    world.appendChild(el('div', 'marker', { left: '535px', top: '860px' }, '\u25BC Main Entrance'));
+    world.appendChild(el('div', 'marker', { left: '40px', top: '420px' }, 'Exit'));
+    world.appendChild(el('div', 'marker', { left: '1130px', top: '420px' }, 'Exit'));
+    world.appendChild(el('div', 'marker', { left: '556px', top: '395px' }, 'Center aisle'));
+
+    // seats
+    const frag = document.createDocumentFragment();
+    seats.forEach(seat => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'seat';
+      b.dataset.id = seat.id;
+      b.dataset.cat = seat.category;
+      b.style.left = seat.x + 'px';
+      b.style.top = seat.y + 'px';
+      b.textContent = seat.number;
+      b.setAttribute('aria-label',
+        `${seat.sectionName}, row ${seat.row}, seat ${seat.number}, ${fmt(seat.price)}${seat.sold ? ', unavailable' : ''}`);
+      seatEls.set(seat.id, b);
+      frag.appendChild(b);
+    });
+    world.appendChild(frag);
+
+  }
+
+  /* =====================================================
+   * 11. INIT
+   * ===================================================== */
   buildSeats();
-  console.log(seats.size + ' seats generated');
+  renderVenue();
 })();
