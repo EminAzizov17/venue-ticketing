@@ -141,6 +141,21 @@
     });
     world.appendChild(frag);
 
+    renderLegend();
+  }
+
+  function renderLegend() {
+    const ul = $('legend');
+    Object.entries(CATEGORIES).forEach(([key, cat]) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="swatch cat" data-cat="${key}"></span>${cat.name} – ${fmt(cat.price)}`;
+      ul.appendChild(li);
+    });
+    ul.insertAdjacentHTML('beforeend',
+      '<li class="sep"></li>' +
+      '<li><span class="swatch inspected"></span>Inspected</li>' +
+      '<li><span class="swatch in-cart"></span>In cart</li>' +
+      '<li><span class="swatch unavailable"></span>Unavailable</li>');
   }
 
   /* =====================================================
