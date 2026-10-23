@@ -159,8 +159,79 @@
   }
 
   /* =====================================================
+   * 5. SEAT STATE SYNC (single source of truth: cart / inspectedId / sold)
+   * ===================================================== */
+  function refreshSeat(id) {
+    const seat = seats.get(id);
+    const b = seatEls.get(id);
+    if (!seat || !b) return;
+    b.classList.toggle('in-cart', cart.has(id));
+    b.classList.toggle('unavailable', seat.sold && !cart.has(id));
+    b.classList.toggle('inspected', inspectedId === id);
+    b.setAttribute('aria-pressed', inspectedId === id ? 'true' : 'false');
+    b.setAttribute('aria-disabled', seat.sold ? 'true' : 'false');
+  }
+
+  function refreshAllSeats() { seats.forEach((_, id) => refreshSeat(id)); }
+
+  function statusOf(seat) {
+    if (cart.has(seat.id)) return 'In your cart';
+    if (seat.sold) return 'Unavailable';
+    return 'Available';
+  }
+
+  /* =====================================================
+   * 6. INSPECTION
+   * ===================================================== */
+  function showMessage(text, kind) {
+    message.textContent = text || '';
+    message.className = 'message' + (kind ? ' ' + kind : '');
+  }
+
+  function inspect(id) {
+    const prev = inspectedId;
+    inspectedId = id;
+    if (prev) refreshSeat(prev);
+    refreshSeat(id);
+    renderInspectPanel();
+    showMessage('');
+  }
+
+  function renderInspectPanel() {
+    const empty = $('inspect-empty');
+    const details = $('inspect-details');
+    const seat = inspectedId && seats.get(inspectedId);
+    if (!seat) {
+      empty.hidden = false; details.hidden = true;
+      addBtn.disabled = true; addBtn.textContent = 'ADD TO CART';
+      return;
+    }
+    empty.hidden = true; details.hidden = false;
+    $('d-seat').textContent = seat.id;
+    $('d-section').textContent = seat.sectionName;
+    $('d-rownum').textContent = `Row ${seat.row} / Seat ${seat.number}`;
+    $('d-category').textContent = CATEGORIES[seat.category].name;
+    $('d-price').textContent = fmt(seat.price);
+    $('d-status').textContent = statusOf(seat);
+
+    const inCart = cart.has(seat.id);
+    addBtn.disabled = seat.sold || inCart;
+    addBtn.textContent = inCart ? 'ALREADY IN CART' : seat.sold ? 'UNAVAILABLE' : 'ADD TO CART';
+  }
+
+  /* =====================================================
+   * 10. EVENTS
+   * ===================================================== */
+  world.addEventListener('click', e => {
+    const b = e.target.closest('.seat');
+    if (b) inspect(b.dataset.id);
+  });
+
+  /* =====================================================
    * 11. INIT
    * ===================================================== */
   buildSeats();
   renderVenue();
+  refreshAllSeats();
+  renderInspectPanel();
 })();
