@@ -220,6 +220,42 @@
   }
 
   /* =====================================================
+   * 7. CART
+   * ===================================================== */
+  function addToCart() {
+    const seat = inspectedId && seats.get(inspectedId);
+    if (!seat) return;
+    if (seat.sold) { showMessage('This seat is unavailable.', 'warn'); return; }
+    if (cart.has(seat.id)) { showMessage('This seat is already in your cart.', 'warn'); return; }
+    cart.add(seat.id);
+    refreshSeat(seat.id);
+    renderCart();
+    renderInspectPanel();
+    showMessage(`Seat ${seat.id} added to cart.`, 'ok');
+  }
+
+  function renderCart() {
+    const list = $('cart-list');
+    list.innerHTML = '';
+    let total = 0;
+    cart.forEach(id => {
+      const s = seats.get(id);
+      total += s.price;
+      const li = document.createElement('li');
+      li.innerHTML =
+        `<div class="info"><strong>${s.sectionName}</strong>` +
+        `<small>Row ${s.row}, Seat ${s.number} &middot; ${CATEGORIES[s.category].name}</small></div>` +
+        `<div class="right"><span>${fmt(s.price)}</span>` +
+        `<button type="button" class="remove" data-id="${id}" aria-label="Remove seat ${id} from cart">Remove</button></div>`;
+      list.appendChild(li);
+    });
+    $('cart-total').textContent = fmt(total);
+    $('cart-count').textContent = cart.size;
+    $('cart-empty').hidden = cart.size > 0;
+    $('clear-cart').disabled = cart.size === 0;
+  }
+
+  /* =====================================================
    * 10. EVENTS
    * ===================================================== */
   world.addEventListener('click', e => {
@@ -227,11 +263,14 @@
     if (b) inspect(b.dataset.id);
   });
 
+  addBtn.addEventListener('click', addToCart);
+
   /* =====================================================
    * 11. INIT
    * ===================================================== */
   buildSeats();
   renderVenue();
   refreshAllSeats();
+  renderCart();
   renderInspectPanel();
 })();
