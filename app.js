@@ -234,6 +234,23 @@
     showMessage(`Seat ${seat.id} added to cart.`, 'ok');
   }
 
+  function removeFromCart(id) {
+    if (!cart.delete(id)) return;
+    refreshSeat(id);          // map updates immediately
+    renderCart();
+    if (inspectedId === id) renderInspectPanel();
+    showMessage(`Seat ${id} removed.`, 'ok');
+  }
+
+  function clearCart() {
+    const ids = [...cart];
+    cart.clear();
+    ids.forEach(refreshSeat);
+    renderCart();
+    renderInspectPanel();
+    showMessage('Cart cleared.', 'ok');
+  }
+
   function renderCart() {
     const list = $('cart-list');
     list.innerHTML = '';
@@ -264,6 +281,12 @@
   });
 
   addBtn.addEventListener('click', addToCart);
+
+  $('cart-list').addEventListener('click', e => {
+    const b = e.target.closest('.remove');
+    if (b) removeFromCart(b.dataset.id);
+  });
+  $('clear-cart').addEventListener('click', clearCart);
 
   /* =====================================================
    * 11. INIT
