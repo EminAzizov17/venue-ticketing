@@ -229,6 +229,7 @@
     if (cart.has(seat.id)) { showMessage('This seat is already in your cart.', 'warn'); return; }
     cart.add(seat.id);
     refreshSeat(seat.id);
+    saveCart();
     renderCart();
     renderInspectPanel();
     showMessage(`Seat ${seat.id} added to cart.`, 'ok');
@@ -237,6 +238,7 @@
   function removeFromCart(id) {
     if (!cart.delete(id)) return;
     refreshSeat(id);          // map updates immediately
+    saveCart();
     renderCart();
     if (inspectedId === id) renderInspectPanel();
     showMessage(`Seat ${id} removed.`, 'ok');
@@ -246,6 +248,7 @@
     const ids = [...cart];
     cart.clear();
     ids.forEach(refreshSeat);
+    saveCart();
     renderCart();
     renderInspectPanel();
     showMessage('Cart cleared.', 'ok');
@@ -273,6 +276,30 @@
   }
 
   /* =====================================================
+   * 8. LOCAL STORAGE
+   * ===================================================== */
+  function saveCart() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...cart])); }
+    catch (e) { /* storage may be unavailable; app still works */ }
+  }
+
+  function loadCart() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const ids = JSON.parse(raw);
+      if (!Array.isArray(ids)) return;
+      ids.forEach(id => {
+        const s = seats.get(id);
+        if (s && !s.sold) cart.add(id);   // ignore stale / invalid / unavailable ids
+      });
+      saveCart(); // write back the cleaned list
+    } catch (e) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    }
+  }
+
+  /* =====================================================
    * 10. EVENTS
    * ===================================================== */
   world.addEventListener('click', e => {
@@ -293,6 +320,7 @@
    * ===================================================== */
   buildSeats();
   renderVenue();
+  loadCart();
   refreshAllSeats();
   renderCart();
   renderInspectPanel();
