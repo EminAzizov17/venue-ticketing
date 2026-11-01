@@ -300,6 +300,56 @@
   }
 
   /* =====================================================
+   * 9. MAP NAVIGATION (zoom / pan)
+   * ===================================================== */
+  const MIN_SCALE = 0.3, MAX_SCALE = 2.5, ZOOM_STEP = 1.25, MOVE_STEP = 90;
+  const view = { scale: 1, x: 0, y: 0 };
+
+  function clampView() {
+    view.scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, view.scale));
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    const w = WORLD.width * view.scale, h = WORLD.height * view.scale;
+    // keep the viewport center always over some part of the venue
+    view.x = Math.min(vw / 2, Math.max(vw / 2 - w, view.x));
+    view.y = Math.min(vh / 2, Math.max(vh / 2 - h, view.y));
+  }
+
+  function applyView() {
+    clampView();
+    world.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+  }
+
+  function resetView() {
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    view.scale = Math.min(vw / WORLD.width, vh / WORLD.height) * 0.97;
+    view.x = (vw - WORLD.width * view.scale) / 2;
+    view.y = (vh - WORLD.height * view.scale) / 2;
+    applyView();
+  }
+
+  // zoom keeping the point (cx, cy) in viewport coordinates fixed
+  function zoomAt(factor, cx, cy) {
+    const old = view.scale;
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, old * factor));
+    if (next === old) return;
+    const wx = (cx - view.x) / old;
+    const wy = (cy - view.y) / old;
+    view.scale = next;
+    view.x = cx - wx * next;
+    view.y = cy - wy * next;
+    applyView();
+  }
+
+  function zoomCenter(factor) {
+    zoomAt(factor, viewport.clientWidth / 2, viewport.clientHeight / 2);
+  }
+
+  function move(dx, dy) {
+    view.x += dx; view.y += dy;
+    applyView();
+  }
+
+  /* =====================================================
    * 10. EVENTS
    * ===================================================== */
   world.addEventListener('click', e => {
@@ -315,6 +365,16 @@
   });
   $('clear-cart').addEventListener('click', clearCart);
 
+  $('zoom-in').addEventListener('click', () => zoomCenter(ZOOM_STEP));
+  $('zoom-out').addEventListener('click', () => zoomCenter(1 / ZOOM_STEP));
+  // "Move Up" moves the view up (the map content shifts down), etc.
+  $('move-up').addEventListener('click', () => move(0, MOVE_STEP));
+  $('move-down').addEventListener('click', () => move(0, -MOVE_STEP));
+  $('move-left').addEventListener('click', () => move(MOVE_STEP, 0));
+  $('move-right').addEventListener('click', () => move(-MOVE_STEP, 0));
+  $('reset-view').addEventListener('click', resetView);
+  window.addEventListener('resize', applyView);
+
   /* =====================================================
    * 11. INIT
    * ===================================================== */
@@ -324,4 +384,5 @@
   refreshAllSeats();
   renderCart();
   renderInspectPanel();
+  resetView();
 })();
