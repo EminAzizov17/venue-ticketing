@@ -349,16 +349,59 @@
     applyView();
   }
 
+  /* ---- Bonus: mouse wheel zoom + click/drag panning ---- */
+  let drag = null;
+  let suppressClick = false;
+
+  viewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    zoomAt(factor, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  viewport.addEventListener('pointerdown', e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y, active: false };
+  });
+
+  viewport.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.active && Math.hypot(dx, dy) > 5) {
+      drag.active = true;
+      viewport.classList.add('dragging');
+      try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    if (drag.active) {
+      view.x = drag.ox + dx;
+      view.y = drag.oy + dy;
+      applyView();
+    }
+  });
+
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (drag.active) {
+      suppressClick = true;                   // a drag must not count as a seat click
+      setTimeout(() => { suppressClick = false; }, 0);
+    }
+    viewport.classList.remove('dragging');
+    drag = null;
+  }
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+
   /* =====================================================
    * 10. EVENTS
    * ===================================================== */
   world.addEventListener('click', e => {
+    if (suppressClick) return;
     const b = e.target.closest('.seat');
     if (b) inspect(b.dataset.id);
   });
 
   addBtn.addEventListener('click', addToCart);
-
   $('cart-list').addEventListener('click', e => {
     const b = e.target.closest('.remove');
     if (b) removeFromCart(b.dataset.id);
@@ -373,8 +416,8 @@
   $('move-left').addEventListener('click', () => move(MOVE_STEP, 0));
   $('move-right').addEventListener('click', () => move(-MOVE_STEP, 0));
   $('reset-view').addEventListener('click', resetView);
-  window.addEventListener('resize', applyView);
 
+  window.addEventListener('resize', applyView);
   /* =====================================================
    * 11. INIT
    * ===================================================== */
