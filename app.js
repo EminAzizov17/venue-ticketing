@@ -418,6 +418,13 @@
   $('reset-view').addEventListener('click', resetView);
 
   window.addEventListener('resize', applyView);
+  // keep cart in sync if another tab changes it
+  window.addEventListener('storage', e => {
+    if (e.key !== STORAGE_KEY) return;
+    cart.clear(); loadCart();
+    refreshAllSeats(); renderCart(); renderInspectPanel();
+  });
+
   /* =====================================================
    * 11. INIT
    * ===================================================== */
